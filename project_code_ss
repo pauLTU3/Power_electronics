@@ -41,13 +41,19 @@ int main(void)
     /* After soft start, maintain maximum duty cycle */
     while (1U)
     {
+    	PWM_SetFreq(&PWM_0, freq);          // Set the PWM frequency
     	 while (duty < max_duty)
     	    {
-    	        PWM_SetFreq(&PWM_0, freq);          // Set the PWM frequency
+
     	        PWM_SetDutyCycle(&PWM_0, duty);    // Set the PWM duty cycle
     	        delay_ms(step_delay_ms);           // Wait for the next step (1 second)
     	        duty += duty_step;                 // Increment the duty cycle
     	    }
+    	 if (duty > max_duty)
+    	 {
+    		 duty = max_duty;
+    	 }
+
         PWM_SetFreq(&PWM_0, freq);          // Configure the PWM frequency
         PWM_SetDutyCycle(&PWM_0, max_duty); // Maintain maximum duty cycle
     }
