@@ -1,0 +1,108 @@
+/*
+ * main.c
+ *
+ *  Created on: 2024 Oct 17 14:27:04
+ *  Author: pauli
+ */
+
+#include "DAVE.h" // Declarations from DAVE Code Generation (includes SFR declaration)
+
+uint16_t freq = 20000;         // PWM frequency in Hz
+uint16_t max_duty = 5540;      // Maximum duty cycle (100% = 10000)
+uint16_t min_duty = 0;         // Starting duty cycle for soft start
+uint16_t duty_step = 500;      // Step size for duty cycle increment
+uint32_t step_delay_ms = 1; // Delay between each step in milliseconds
+uint16_t duty = 0;
+
+_Bool enable = 0;
+
+XMC_VADC_RESULT_SIZE_t result;
+
+float adc_voltage=0;
+float out_voltage=0;
+float overvoltage= 12;
+
+void delay_ms(uint32_t ms);
+
+
+void Adc_Measurement_Handler()
+{
+
+  result = ADC_MEASUREMENT_GetResult(&ADC_MEASUREMENT_Channel_A);
+  adc_voltage = ((float)result / 4095.0f) * 2.97f;
+  out_voltage = adc_voltage * 4.0;
+  ADC_MEASUREMENT_StartConversion(&ADC_MEASUREMENT_0);
+}
+
+
+int main(void)
+{
+
+    DAVE_STATUS_t status;
+
+    status = DAVE_Init(); /* Initialization of DAVE APPs */
+
+
+    if (status != DAVE_STATUS_SUCCESS)
+    {
+        /* Placeholder for error handler code. */
+        XMC_DEBUG("DAVE APPs initialization failed\n");
+
+        while (1U)
+        {
+        }
+    }
+
+    /* Soft start implementation */
+
+    duty = min_duty;
+
+
+    /* After soft start, maintain maximum duty cycle */
+    while (1U)
+    {
+    	if (out_voltage <= overvoltage)
+    	{
+    		PWM_SetFreq(&PWM_0, freq);
+    		        if (enable == 0)
+    		        {
+    		        	 PWM_Stop(&PWM_0);
+    		        	 duty = 0;
+    		        }
+    		        else
+    		        {
+    		            PWM_Start(&PWM_0);    // Starts the PWM generation
+
+    		            while (duty < max_duty)
+    		                	    {
+
+    		                	        PWM_SetDutyCycle(&PWM_0, duty);    // Set the PWM duty cycle
+    		                	        delay_ms(step_delay_ms);           // Wait for the next step (1 second)
+    		                	        duty += duty_step;                 // Increment the duty cycle
+    		                	    }
+    		        }
+
+
+    		    	 if (duty > max_duty)
+    		    	 {
+    		    		 duty = max_duty;
+    		    	 }
+
+    		        PWM_SetDutyCycle(&PWM_0, max_duty); // Maintain maximum duty cycle
+    	}
+    	else
+    	{
+    		enable = 0;
+    		PWM_SetDutyCycle(&PWM_0, min_duty);
+    		 duty = min_duty;
+    	}
+
+    }
+}
+
+/* Software delay function */
+void delay_ms(uint32_t ms)
+{
+    for (float i = 0; i < ms * 9000; i++); //1s// 144000000/(16/seconds you need)
+
+}
