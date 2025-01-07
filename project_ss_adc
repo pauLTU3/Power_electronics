@@ -20,7 +20,7 @@ XMC_VADC_RESULT_SIZE_t result;
 
 float adc_voltage=0;
 float out_voltage=0;
-float overvoltage= 12;
+float overvoltage= 8;
 
 void delay_ms(uint32_t ms);
 
@@ -29,8 +29,8 @@ void Adc_Measurement_Handler()
 {
 
   result = ADC_MEASUREMENT_GetResult(&ADC_MEASUREMENT_Channel_A);
-  adc_voltage = ((float)result / 4095.0f) * 2.97f;
-  out_voltage = adc_voltage * 4.0;
+  adc_voltage = ((float)result / 3686.4f) * 2.97f;
+  out_voltage = adc_voltage * 4;
   ADC_MEASUREMENT_StartConversion(&ADC_MEASUREMENT_0);
 }
 
@@ -61,7 +61,7 @@ int main(void)
     /* After soft start, maintain maximum duty cycle */
     while (1U)
     {
-    	if (out_voltage <= overvoltage)
+    	if (out_voltage <= overvoltage+3)
     	{
     		PWM_SetFreq(&PWM_0, freq);
     		        if (enable == 0)
